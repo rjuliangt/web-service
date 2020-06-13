@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request, make_response, render_template
+from flask import Flask, jsonify, make_response, render_template, request
 import datetime
 import jwt
-# from configure import key
 from functools import wraps
+
 # Nombramos a nuestra apliacion como app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'key1234'
@@ -28,20 +28,18 @@ def token_required(f):
 # ***********************************************************
 @app.route('/', methods=['GET'])
 def home():
-    return jsonify({"Hola" : "Bienveindo"})
-    # return render_template('donor.html')
+    return jsonify({'mesagge' : 'Home'})
 
-@app.route('/authentication', methods=['GET'])
-def authentication():
-    auth = request.authorization
-    if auth and auth.password == 'password':
-        token = jwt.encode({'user' : auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECTRET_KEY'])
-        return jsonify({'token' : token.decode('UTF-8')})
+@app.route('/check', methods=['GET'])
+def check():
+    return jsonify({'mesagge' : 'Working web server :)'})
 
-    return make_response('Unverified customer', 401, {'WWW_authentiaction' : 'Login required'})
+@app.route('/login',methods=['GET'])
+def login():
+    return render_template('login.html')
 
-@app.route('/add_donor', methods=['GET'])
-def add_donor():
+@app.route('/donor', methods=['GET'])
+def donor():
     return render_template('donor.html')
 
 @app.route('/unprotected')
@@ -51,12 +49,27 @@ def unprotected():
 @app.route('/protected')
 def protected():
     return jsonify({'mesagge' : 'This is only avaliable for people with valid tokens!'})
+
 # ***************************************************************
 # ************************* Metodos "POST" **********************
 # @app.route('/add_donor', methods=['POST'])
 # def add_donor():
-#     return jsonify({"Holla:","Bienveindo"})
+#     return jsonify({"Holla:" : "Bienveindo"})
 
+@app.route('/login',methods=['POST'])
+def authentiaction():
+    if request.method == "POST":
+        user = request.form.get('usuario')
+        passw = request.form.get('password')
+        print(user)
+        print(passw)
+        # auth = request.authorization
+        if user and passw == 'password':
+            token = jwt.encode({'user' : user , 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+            return jsonify({'token' : token.decode('UTF-8')})
+        else:
+            return render_template('login.html')
+    return make_response('Unverified customer', 401, {'WWW_authentiaction' : 'Login required'})
 
 
 
