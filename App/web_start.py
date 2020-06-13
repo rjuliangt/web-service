@@ -37,9 +37,9 @@ def token_required(f):
 # ***********************************************************
 @app.route('/', methods=['GET'])
 def home():
-    return jsonify({'mesagge' : 'Home'})
+    return render_template('layout.html')
 
-@app.route('/check', methods=['GET'])
+@app.route('/apis/check', methods=['GET'])
 def check():
     return jsonify({'mesagge' : 'Working web server :)'})
 
@@ -53,6 +53,24 @@ def all_donor():
     cur.execute('SELECT * FROM donors')
     data = cur.fetchall()
     return jsonify({"doners" : data})
+
+@app.route('/apis/add_donor', methods=['POST'])
+def add_donor():
+    if request.method == "POST":
+        names = request.form.get('names')
+        lastname = request.form.get('last_name')
+        ages= request.form.get('ages')
+        gener = request.form.get('gener')
+        dates = request.form.get('dates')
+        status = request.form.get('status')
+        donation = request.form.get('donation')
+        direction = request.form.get('direction')
+        phone = request.form.get('phone')
+        cur = mysql.connection.cursor()
+        cur.execute('INSERT INTO donors (id_donor,names, last_name, ages, gener, status, direction, phone, dates, donation) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+        (names, lastname,ages,gener,status,direction,phone,dates,donation))
+        mysql.connection.commit()
+        return jsonify({'message' : 'inserted successfully'})
 
 @app.route('/donor', methods=['GET'])
 def donor():
@@ -91,7 +109,7 @@ def authentiaction():
     return make_response('Unverified customer', 401, {'WWW_authentiaction' : 'Login required'})
 
 @app.route('/add_donor', methods=['POST'])
-def add_donor():
+def add_donors():
     if request.method == "POST":
         names = request.form.get('names')
         lastname = request.form.get('last_name')
