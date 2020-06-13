@@ -1,12 +1,21 @@
-from flask import Flask, jsonify, make_response, render_template, request
+from flask import Flask, jsonify, make_response, render_template, request, redirect, flash, url_for
+from flask_mysqldb  import MySQL
 import datetime
+import json
 import jwt
 from functools import wraps
 
 # Nombramos a nuestra apliacion como app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'key1234'
+# *********** Conecion a la base de datos ************************
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_DB'] = 'web_server'
+mysql = MySQL(app)
 
+app.secret_key = 'key1234'
 # ************ FUNCION PARA VERIDICAR ELTOKEN ********************
 # ****************************************************************
 def token_required(f):
@@ -38,9 +47,19 @@ def check():
 def login():
     return render_template('login.html')
 
+@app.route('/apis/all_donors')
+def all_donor():
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM donors')
+    data = cur.fetchall()
+    return jsonify({"doners" : data})
+
 @app.route('/donor', methods=['GET'])
 def donor():
-    return render_template('donor.html')
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM donors')
+    data = cur.fetchall()
+    return render_template('donor.html', donors = data)
 
 @app.route('/unprotected')
 def unprotected():
@@ -71,7 +90,24 @@ def authentiaction():
             return render_template('login.html')
     return make_response('Unverified customer', 401, {'WWW_authentiaction' : 'Login required'})
 
-
+@app.route('/add_donor', methods=['POST'])
+def add_donor():
+    if request.method == "POST":
+        names = request.form.get('names')
+        lastname = request.form.get('last_name')
+        ages= request.form.get('ages')
+        gener = request.form.get('gener')
+        dates = request.form.get('dates')
+        status = request.form.get('status')
+        donation = request.form.get('donation')
+        direction = request.form.get('direction')
+        phone = request.form.get('phone')
+        cur = mysql.connection.cursor()
+        cur.execute('INSERT INTO donors (id_donor,names, last_name, ages, gener, status, direction, phone, dates, donation) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+        (names, lastname,ages,gener,status,direction,phone,dates,donation))
+        mysql.connection.commit()
+        flash('Donor Added successfully')
+        return redirect(url_for('donor'))
 
 
 if __name__ == '__main__':
